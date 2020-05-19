@@ -1,5 +1,5 @@
 <template>
-    <div class="gisMap" :class="styleChange?'':'plane'">
+    <div class="gisMap plane">
         <div id="map" class="mapContainer">
             <div class='map-button'>
                 <el-button @click="initCircle">绘制圆</el-button>
@@ -8,8 +8,8 @@
                 <el-button @click='initLine'>绘制线</el-button>
                 <el-button @click='reset'>重置高亮</el-button>
                 <el-button @click='remove'>清除图层</el-button>
-                <el-button @click='styleChange=!styleChange'>marker高亮</el-button>
-                <el-button @click='changetext2'>改变marker高亮</el-button>
+                <el-button @click='light(0)'>marker高亮1</el-button>
+                <el-button @click='light(0.1)'>改变marker高亮</el-button>
             </div>
         </div>
     </div>
@@ -22,20 +22,31 @@ import '@geoman-io/leaflet-geoman-free' //左上操作栏引入
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css'
 import * as turf from '@turf/turf' //truf.js引入（空间地理函数）
 import markerIcon from '../assets/img/location.png'
-var map, Circle, mapGroup, targetCfg
-// ,
-// redIcon = new L.Icon({
-//     iconUrl: markerIcon,
-//     iconSize: [41, 41],
-//     iconAnchor: [12, 41],
-//     popupAnchor: [1, -34]
-// }) // marker图标
+var map,
+    Circle,
+    mapGroup,
+    targetCfg,
+    greenIcon = new L.divIcon({
+        className: 'dIcon',
+        html: `<div class="live"><img style='width:41px;height:41px' src="${markerIcon}"><span></span><span></span></div>`,
+        iconSize: [41, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34]
+    }),
+    redIcon = new L.Icon({
+        iconUrl: markerIcon,
+        iconSize: [41, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34]
+    }) // marker图标,
 export default {
     name: 'home',
     data() {
         return {
             styleChange: true,
-            changetext: 1
+            changetext: 1,
+            data: [0, 0.1],
+            showdata: {}
         }
     },
     mounted() {
@@ -115,26 +126,13 @@ export default {
             // map.addLayer(Circle)
         }, //绘制圆
         initMarker() {
-            let _this = this
-            L.marker([30.28, 120.15], {
-                icon: L.divIcon({
-                    className: 'dIcon',
-                    html: `<div class="${_this.delay(1)}"><img src="${markerIcon}"><span></span><span></span>{{${this.changetext}}}</div>`,
-                    iconSize: [41, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34]
-                })
-            }).addTo(map)
-            L.marker([30.38, 120.15], {
-                icon: L.divIcon({
-                    className: 'dIcon',
-                    html: `<div class="${_this.delay(2)}"><img src="${markerIcon}"><span></span><span></span>{{${this.changetext}}</div>`,
-                    iconSize: [41, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34]
-                })
-            }).addTo(map)
-            // L.marker([30.28, 120.15], { icon: redIcon }).addTo(map)
+            for (let i = 0; i < this.data.length; i++) {
+                let data = L.marker([30.28 + this.data[i], 120.15], { icon: redIcon })
+                this.showdata[this.data[i]] = data
+                data.addTo(map)
+            }
+            console.log(this.showdata)
+            console.log(map)
         }, //绘制marker标记
         initPolygon() {
             let polygon = turf.polygon(
@@ -190,6 +188,12 @@ export default {
         remove() {
             mapGroup.clearLayers()
         }, //图层清除
+        light(e) {
+            for (let key in  this.showdata) {
+                this.showdata[key].setIcon(redIcon)
+            }
+            this.showdata[e].setIcon(greenIcon)
+        },//改变高亮实现，然后开始研究高亮，保证高亮不改变原来的大小
         reset() {
             if (targetCfg) {
                 Circle.resetStyle(targetCfg)
