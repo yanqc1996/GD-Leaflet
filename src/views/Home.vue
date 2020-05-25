@@ -1,5 +1,5 @@
 <template>
-    <div class="gisMap plane">
+    <div class="gisMap" :class="styleChange?'':'plane'">
         <div id="map" class="mapContainer">
             <div class='map-button'>
                 <el-button @click="initCircle">绘制圆</el-button>
@@ -8,8 +8,8 @@
                 <el-button @click='initLine'>绘制线</el-button>
                 <el-button @click='reset'>重置高亮</el-button>
                 <el-button @click='remove'>清除图层</el-button>
-                <el-button @click='light(0)'>marker高亮1</el-button>
-                <el-button @click='light(0.1)'>改变marker高亮</el-button>
+                <el-button @click='styleChange=!styleChange'>marker高亮</el-button>
+                <el-button @click='changetext2'>改变marker高亮</el-button>
             </div>
         </div>
     </div>
@@ -21,32 +21,28 @@ import 'leaflet.chinatmsproviders' //Leaflet常用地图切换加载（用于地
 import '@geoman-io/leaflet-geoman-free' //左上操作栏引入
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css'
 import * as turf from '@turf/turf' //truf.js引入（空间地理函数）
+import 'leaflet-canvas-marker/dist/leaflet.canvas-markers.js'
 import markerIcon from '../assets/img/location.png'
+import 'leaflet.markercluster/dist/MarkerCluster.css'
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
+import 'leaflet.markercluster'
 var map,
+    baseLayers,
     Circle,
     mapGroup,
     targetCfg,
-    greenIcon = new L.divIcon({
-        className: 'dIcon',
-        html: `<div class="live"><img style='width:41px;height:41px' src="${markerIcon}"><span></span><span></span></div>`,
-        iconSize: [41, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34]
-    }),
     redIcon = new L.Icon({
         iconUrl: markerIcon,
         iconSize: [41, 41],
         iconAnchor: [12, 41],
         popupAnchor: [1, -34]
-    }) // marker图标,
+    }) // marker图标
 export default {
     name: 'home',
     data() {
         return {
             styleChange: true,
-            changetext: 1,
-            data: [0, 0.1],
-            showdata: {}
+            changetext: 1
         }
     },
     mounted() {
@@ -80,7 +76,7 @@ export default {
                 layers: [normal], //默认添加到地图上的图层
                 dragging: true //是否可以拖拽
             })
-            var baseLayers = {
+            baseLayers = {
                 街道图: normal,
                 卫星图: satellite
             } //初始化图层组
@@ -126,13 +122,56 @@ export default {
             // map.addLayer(Circle)
         }, //绘制圆
         initMarker() {
-            for (let i = 0; i < this.data.length; i++) {
-                let data = L.marker([30.28 + this.data[i], 120.15], { icon: redIcon })
-                this.showdata[this.data[i]] = data
-                data.addTo(map)
+            var heatMarkerLayer = L.markerClusterGroup()
+            // let _this=this
+            // var ciLayer = L.canvasIconLayer({}).addTo(map);
+            // let _this = this
+            // for(let i=0;i<1;i++){
+            //marker渲染成canvas
+            // let marker1=L.marker([30.28+i/1000, 120.15+i/1000], { icon: redIcon })
+            // ciLayer.addMarker(marker1);
+            // let marker2=L.marker([30.38+i/1000, 120.15+i/1000], { icon: redIcon })
+            // ciLayer.addMarker(marker2);
+            // L.marker([30.28+i/1000, 120.15+i/1000], {
+            //     icon: L.divIcon({
+            //         className: 'dIcon',
+            //         html: `<div class="${_this.delay(1)}"><img src="${markerIcon}"><span></span><span></span>{</div>`,
+            //         iconSize: [41, 41],
+            //         iconAnchor: [12, 41],
+            //         popupAnchor: [1, -34]
+            //     })
+            // }).addTo(map)
+            // L.marker([30.38+i/1000, 120.15+i/1000], {
+            //     icon: L.divIcon({
+            //         className: 'dIcon',
+            //         html: `<div class="${_this.delay(2)}"><img src="${markerIcon}"><span></span><span></span></div>`,
+            //         iconSize: [41, 41],
+            //         iconAnchor: [12, 41],
+            //         popupAnchor: [1, -34]
+            //     })
+            // }).addTo(map)
+            // }
+            for (let i = 0; i < 3; i++) {
+                let data = L.marker([30.28, 120.15], { icon: redIcon })
+                    .addTo(map)
+                    .on('click', function(e) {
+                        console.log(e,i)
+                    })
+
+                heatMarkerLayer.addLayer(data)
+                let data2 = L.marker([30.38+i/10000000, 120.15+i/10000000], { icon: redIcon })
+                    .addTo(map)
+                    .on('click', function(e) {
+                        console.log(e)
+                    })
+
+                heatMarkerLayer.addLayer(data2)
             }
-            console.log(this.showdata)
-            console.log(map)
+            heatMarkerLayer.addTo(map)
+            // baseLayers.addOverlay(heatMarkerLayer, '整改点检测点位图')
+            // console.log(data.getLatLng())
+            // console.log(data.toGeoJSON())
+            // L.marker([30.38, 120.15], { icon: redIcon }).addTo(map)
         }, //绘制marker标记
         initPolygon() {
             let polygon = turf.polygon(
@@ -188,12 +227,6 @@ export default {
         remove() {
             mapGroup.clearLayers()
         }, //图层清除
-        light(e) {
-            for (let key in  this.showdata) {
-                this.showdata[key].setIcon(redIcon)
-            }
-            this.showdata[e].setIcon(greenIcon)
-        },//改变高亮实现，然后开始研究高亮，保证高亮不改变原来的大小
         reset() {
             if (targetCfg) {
                 Circle.resetStyle(targetCfg)
