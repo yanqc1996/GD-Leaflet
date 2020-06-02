@@ -3,13 +3,15 @@
         <div id="map" class="mapContainer">
             <div class='map-button'>
                 <el-button @click="initCircle">绘制圆</el-button>
-                <el-button @click='initMarker'>绘制Marker</el-button>
+                <el-button @click='initMarker'>绘制Marker(重叠点）</el-button>
+                <el-button @click='canvasMarker'>绘制Marker(canvas）</el-button>
                 <el-button @click='initPolygon'>绘制多边形</el-button>
                 <el-button @click='initLine'>绘制线</el-button>
                 <el-button @click='reset'>重置高亮</el-button>
                 <el-button @click='remove'>清除图层</el-button>
                 <el-button @click='styleChange=!styleChange'>marker高亮</el-button>
                 <el-button @click='changetext2'>改变marker高亮</el-button>
+                <el-button @click='center'>中心点</el-button>
             </div>
         </div>
     </div>
@@ -23,6 +25,7 @@ import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css'
 import * as turf from '@turf/turf' //truf.js引入（空间地理函数）
 import 'leaflet-canvas-marker/dist/leaflet.canvas-markers.js'
 import markerIcon from '../assets/img/location.png'
+
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import 'leaflet.markercluster'
@@ -47,9 +50,84 @@ export default {
     },
     mounted() {
         this.initMap() //地图初始化
+        this.dataMap()
     },
     computed: {},
     methods: {
+        center() {
+            // console.log(L.latLng([28,120]))
+            // map.setView(L.latLng([28.120]),13)
+            map.setView([28, 120], 13)
+        },
+        dataMap() {
+            let data = [
+                {
+                    start: [120, 30],
+                    end: [120, 40]
+                },
+                {
+                    start: [120, 40],
+                    end: [120, 50]
+                },
+                {
+                    start: [120, 60],
+                    end: [120, 70]
+                },
+                {
+                    start: [120, 50],
+                    end: [120, 60]
+                },
+                {
+                    start: [120, 80],
+                    end: [120, 90]
+                },
+                {
+                    start: [120, 70],
+                    end: [120, 80]
+                }
+            ]
+            let dataCfg = []
+            var NetworkError = function() {
+                for (let i = 0; i < data.length; i++) {
+                    let test = data.some(e => {
+                        return JSON.stringify(e.end) === JSON.stringify(data[i].start)
+                    })
+                    if (!test) {
+                        dataCfg.push(data[i].start)
+                        data.splice(i, 1)
+                        if (data.length > 0) {
+                            NetworkError()
+                        } else {
+                            return false
+                        }
+                    }
+                    // arr.splice(i,1);
+                }
+                // for (let i of data) {
+                //     let test = data.some(e => {
+                //         return JSON.stringify(e.end) === JSON.stringify(i.start)
+                //     })
+                //     if (!test) {
+                //         dataCfg.push(i.start)
+                //         console.log(data)
+                //         data.slice(0, 1)
+                //         console.log(data)
+                //         console.log(dataCfg)
+                //         if(data.length>0){
+                //             // NetworkError()
+                //         }
+                //         else{
+                //             return false
+                //         }
+                //     }
+                //     // every
+                //     // for(let j of data){
+                //     //     if()
+                //     // }
+                // }
+            }
+            NetworkError()
+        },
         delay(e) {
             // 转化为延迟多少秒
             return this.changetext === e ? 'live' : ''
@@ -122,57 +200,65 @@ export default {
             // map.addLayer(Circle)
         }, //绘制圆
         initMarker() {
-            var heatMarkerLayer = L.markerClusterGroup()
-            // let _this=this
-            // var ciLayer = L.canvasIconLayer({}).addTo(map);
-            // let _this = this
-            // for(let i=0;i<1;i++){
-            //marker渲染成canvas
-            // let marker1=L.marker([30.28+i/1000, 120.15+i/1000], { icon: redIcon })
-            // ciLayer.addMarker(marker1);
-            // let marker2=L.marker([30.38+i/1000, 120.15+i/1000], { icon: redIcon })
-            // ciLayer.addMarker(marker2);
-            // L.marker([30.28+i/1000, 120.15+i/1000], {
-            //     icon: L.divIcon({
-            //         className: 'dIcon',
-            //         html: `<div class="${_this.delay(1)}"><img src="${markerIcon}"><span></span><span></span>{</div>`,
-            //         iconSize: [41, 41],
-            //         iconAnchor: [12, 41],
-            //         popupAnchor: [1, -34]
-            //     })
-            // }).addTo(map)
-            // L.marker([30.38+i/1000, 120.15+i/1000], {
-            //     icon: L.divIcon({
-            //         className: 'dIcon',
-            //         html: `<div class="${_this.delay(2)}"><img src="${markerIcon}"><span></span><span></span></div>`,
-            //         iconSize: [41, 41],
-            //         iconAnchor: [12, 41],
-            //         popupAnchor: [1, -34]
-            //     })
-            // }).addTo(map)
-            // }
-            for (let i = 0; i < 3; i++) {
-                let data = L.marker([30.28, 120.15], { icon: redIcon })
-                    .addTo(map)
-                    .on('click', function(e) {
-                        console.log(e,i)
-                    })
-
-                heatMarkerLayer.addLayer(data)
-                let data2 = L.marker([30.38+i/10000000, 120.15+i/10000000], { icon: redIcon })
-                    .addTo(map)
-                    .on('click', function(e) {
-                        console.log(e)
-                    })
-
-                heatMarkerLayer.addLayer(data2)
-            }
+            var heatMarkerLayer = L.markerClusterGroup({
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: true,
+                zoomToBoundsOnClick: true,
+                removeOutsideVisibleBounds: true,
+                singleMarkerMode: false,
+                animateAddingMarkers: false,
+                // singleMarkerMode:true,
+                // disableClusteringAtZoom:true,
+                maxClusterRadius: 10, //这个属性设置距离为0.即重复点才会进行聚类
+                spiderLegPolylineOptions: {
+                    weight: 1.5,
+                    color: '#222',
+                    opacity: 0
+                }
+            })
             heatMarkerLayer.addTo(map)
+            for (let i = 0; i < 3000; i++) {
+                // let data = L.marker([30.28, 120.15], { icon: redIcon })
+                //     .addTo(map)
+                //     .on('click', function(e) {
+                //         console.log(e, i)
+                //     })
+
+                // heatMarkerLayer.addLayer(data)
+                // let data2 = L.marker([30.38 + i / 10000000, 120.15 + i / 10000000], {
+                //     icon: redIcon
+                // })
+                //     .addTo(map)
+                //     .on('click', function(e) {
+                //         console.log(e)
+                //     })
+
+                // heatMarkerLayer.addLayer(data2)
+                L.marker([30.28 + i / 1000, 120.15 + i / 1000], { icon: redIcon }).addTo(map)
+                L.marker([30.38 + i / 1000, 120.15 + i / 1000], { icon: redIcon }).addTo(map)
+            }
             // baseLayers.addOverlay(heatMarkerLayer, '整改点检测点位图')
             // console.log(data.getLatLng())
             // console.log(data.toGeoJSON())
             // L.marker([30.38, 120.15], { icon: redIcon }).addTo(map)
         }, //绘制marker标记
+        canvasMarker() {
+            var ciLayer = L.canvasIconLayer({}).addTo(map)
+            for (let i = 0; i < 100000; i++) {
+                // marker渲染成canvas
+                let marker1 = L.marker([30.28 + i / 1000, 120.15 + i / 1000], { icon: redIcon }).on('click', function(e) {
+                        console.log(e)
+                    }).bindTooltip('123')
+                ciLayer.addMarker(marker1)
+                let marker2 = L.marker([30.38 + i / 1000, 120.15 + i / 1000], { icon: redIcon }).on('click', function(e) {
+                        console.log(e)
+                    }).bindTooltip('123')
+                ciLayer.addMarker(marker2)
+            }
+            ciLayer.addOnClickListener(function(e) {
+                        console.log(e)
+                    })
+        },
         initPolygon() {
             let polygon = turf.polygon(
                 [
@@ -331,4 +417,10 @@ export default {
 .live span:nth-child(2) {
     -webkit-animation-delay: 1.5s;
 }
+// .marker-cluster-small{
+//     opacity: 0 !important
+// }
 </style>
+
+
+
