@@ -246,18 +246,18 @@ export default {
             var ciLayer = L.canvasIconLayer({}).addTo(map)
             for (let i = 0; i < 100000; i++) {
                 // marker渲染成canvas
-                let marker1 = L.marker([30.28 + i / 1000, 120.15 + i / 1000], { icon: redIcon }).on('click', function(e) {
-                        console.log(e)
-                    }).bindTooltip('123')
+                let marker1 = L.marker([30.28 + i / 1000, 120.15 + i / 1000], {
+                    icon: redIcon
+                }).bindTooltip('123')
                 ciLayer.addMarker(marker1)
-                let marker2 = L.marker([30.38 + i / 1000, 120.15 + i / 1000], { icon: redIcon }).on('click', function(e) {
-                        console.log(e)
-                    }).bindTooltip('123')
+                let marker2 = L.marker([30.38 + i / 1000, 120.15 + i / 1000], {
+                    icon: redIcon
+                }).bindTooltip('123')
                 ciLayer.addMarker(marker2)
             }
             ciLayer.addOnClickListener(function(e) {
-                        console.log(e)
-                    })
+                console.log(e)
+            })
         },
         initPolygon() {
             let polygon = turf.polygon(
